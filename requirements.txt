@@ -26,3 +26,7 @@ google-cloud-bigquery-storage
 # Attempt 2 on the one that saves the content of the conversations
 opentelemetry-instrumentation-google-genai>=0.4b0
 fsspec[gcs]==2025.10.0
+# news digest + WhatsApp chat
+httpx
+fastapi
+uvicorn

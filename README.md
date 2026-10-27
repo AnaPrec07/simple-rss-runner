@@ -272,3 +272,39 @@ If you encounter issues while setting up or running this agent, here are some re
 This agent sample is provided for illustrative purposes only. It serves as a basic example of an agent and a foundational starting point for individuals or teams to develop their own agents.
 
 Users are solely responsible for any further development, testing, security hardening, and deployment of agents based on this sample. We recommend thorough review, testing, and the implementation of appropriate safeguards before using any derived agent in a live or critical system.
+
+---
+
+## Daily news digest (Panama + tech beyond models) — `news/`
+
+```bash
+pip install -r requirements.txt
+python -m news print            # build + print today's briefing
+python -m news email            # build + email it
+python -m news push-whatsapp    # build + send a short version to WhatsApp
+python -m news.check_feeds      # which feeds respond (run this first!)
+uvicorn news.whatsapp:app --port 8080   # chat with your news
+```
+
+Sources live in `news/sources.py` (La Prensa, La Estrella, Newsroom Panama, TVN, Telemetro, Canal de Panamá,
+Rest of World, IEEE Spectrum, Ars, MIT Tech Review, Krebs, SpaceNews, Quanta, STAT...). Items are deduplicated,
+boosted for Panama/chips/robotics/security/energy/bio topics and demoted for pure LLM-release chatter.
+Some feed URLs were written from memory; broken ones are skipped, so prune after `check_feeds`.
+
+### Email deliverability (not landing in spam)
+1. **Use a domain you own** and a transactional sender (Resend, Postmark, or SES) with `MAIL_PROVIDER=resend`,
+   or Gmail SMTP with an app password (`SMTP_USER`, `SMTP_PASSWORD`) if you only email yourself.
+2. **DNS**: SPF (`v=spf1 include:<provider> ~all`), DKIM (provider gives you the CNAME/TXT records), and DMARC
+   (`_dmarc` TXT: `v=DMARC1; p=none; rua=mailto:you@yourdomain.com`, move to `quarantine` once clean).
+3. The code already sends text+HTML, one message per recipient, real `Message-ID`, `List-Unsubscribe`
+   (+ one-click when `MAIL_UNSUBSCRIBE_URL` is set) and a plain subject.
+4. First week: mark the message "Not spam" and add the sender to contacts; a reply from you helps too.
+Env: `MAIL_FROM`, `MAIL_TO` (comma list), `MAIL_REPLY_TO`, `MAIL_UNSUBSCRIBE`, `data/unsubscribed.txt`.
+
+### WhatsApp
+Twilio WhatsApp (sandbox works for personal use). Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`,
+`TWILIO_WHATSAPP_FROM` (`whatsapp:+14155238886`), `PUBLIC_URL` (the exact webhook URL), `WHATSAPP_ALLOWED`
+(your `whatsapp:+507...`), `GOOGLE_API_KEY`. Message "digest", "panama", "tech", or ask anything.
+Proactive pushes outside the 24h window need a Meta-approved template.
+
+Scheduling: `.github/workflows/daily-digest.yml` sends at 06:00 Panama time.
